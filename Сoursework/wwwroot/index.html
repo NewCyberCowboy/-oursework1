@@ -1,0 +1,445 @@
+﻿<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Список больных</title>
+    <style>
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+
+        th {
+            background-color: #f2f2f2;
+        }
+    </style>
+</head>
+
+<body>
+    <h2>Добавить пациента</h2>
+    <form id="addPatientForm">
+        <div class="form-group">
+            <label for="name">Имя</label>
+            <input id="name" class="form-control" placeholder="Введите имя" required />
+            <span id="nameError" class="text-danger"></span>
+        </div>
+        <div class="form-group">
+            <label for="Disease">Заболевание</label>
+            <input id="Disease" class="form-control" placeholder="Введите болезнь" required />
+            <span id="DiseaseError" class="text-danger"></span>
+        </div>
+        <button type="submit" class="btn btn-primary">Добавить</button>
+    </form>
+
+    <h2>Список больных</h2>
+    <table id="PatientList" class="table table-bordered" style="width: 50%; margin: auto;">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Имя</th>
+                <th>Болезнь</th>
+            </tr>
+        </thead>
+        <tbody id="PatientListBody">
+            <!-- Данные пациентов будут добавлены здесь динамически -->
+        </tbody>
+    </table>
+
+    <h1>Медицинские сторудники</h1>
+    <table id="StaffList" class="table table-bordered" style="width: 50%; margin: auto;">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Название</th>
+                <th>Должность</th>
+            </tr>
+        </thead>
+        <tbody></tbody>
+    </table>
+
+    <!-- Форма редактирования пациента -->
+    <div class="container mt-5" id="editFormContainer" style="display: none;">
+        <h2>Редактировать пациента</h2>
+        <form id="editPatientForm" style="display:none;">
+            <input type="hidden" id="editPatientId" />
+
+            <label for="patientName">Имя:</label>
+            <input type="text" id="patientName" required />
+
+            <label for="patientDisease">Заболевание:</label>
+            <input type="text" id="patientDisease" required />
+
+            <button type="submit" class="btn btn-primary">Сохранить</button>
+            <button type="button" class="btn btn-secondary" onclick="cancelEdit()">Отмена</button>
+        </form>
+    </div>
+
+
+    <h2>Добавить мед. сторудника</h2>
+    <form id="addStaffForm">
+        <div class="form-group">
+            <label for="Name">Имя</label>
+            <input id="Name" type="text" class="form-control" required />
+        </div>
+        <div class="form-group">
+            <label for="Position">Должность</label>
+            <input id="Position" type="text" class="form-control" required />
+        </div>
+        <button type="submit" class="btn btn-primary">Добавить</button>
+    </form>
+
+    <h2>Список лекарств</h2>
+    <table id="MedicineList" class="table table-bordered" style="width: 50%; margin: auto;">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Способ использования</th>
+                <th>Доза</th>
+                <th>Количество</th>
+            </tr>
+        </thead>
+        <tbody></tbody>
+    </table>
+
+    <!-- Форма редактирования заказа -->
+    <div id="editStaffFormContainer" style="display: none;">
+        <form id="editStaffForm">
+            <input type="hidden" id="editStaffId" />
+
+            <label for="editName">Имя :</label>
+            <input type="text" id="editName" required />
+
+            <label for="editPosition">Должность:</label>
+            <input type="text" id="editPosition" required />
+
+
+            <button type="submit">Сохранить изменения</button>
+            <button type="button" onclick="document.getElementById('editStaffFormContainer').style.display='none';">Отмена</button>
+        </form>
+    </div>
+
+    <script>
+        // Загрузка пациентов
+        function loadPatients() {
+            fetch('/api/Patient')
+                .then(response => response.json())
+                .then(data => {
+                    console.log(data); // Для отладки
+                    const PatientList = document.getElementById('PatientListBody');
+                    PatientList.innerHTML = ''; // Очистка существующих строк
+
+                    data.forEach(Patient => {
+                        const row = PatientList.insertRow();
+                        row.innerHTML = `
+                <td>${Patient.patientId}</td>
+                <td>${Patient.name}</td>
+                <td>${Patient.disease}</td>
+                <td>
+                    <button class="btn btn-warning" onclick="editPatient(${Patient.patientId})">Изменить</button>
+                    <button class="btn btn-danger" onclick="deletePatient(${Patient.patientId})">Удалить</button>
+                </td>
+            `;
+                    });
+                })
+                .catch(error => console.error('Ошибка:', error));
+        }
+
+        // Обработчик события для добавления пациента
+        document.getElementById('addPatientForm').addEventListener('submit', function (event) {
+            event.preventDefault(); // Предотвращаем стандартное поведение формы
+
+            const newPatient = {
+                Name: document.getElementById('Name').value,
+                Disease: document.getElementById('Disease').value,
+            };
+
+            fetch('/api/Patient', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(newPatient)
+            })
+                .then(response => {
+                    if (response.ok) {
+                        loadPatients(); // Обновляем список клиентов
+                        // Очистка полей формы
+                        document.getElementById('addPatientForm').reset();
+                    } else {
+                        console.error('Ошибка при добавлении клиента:', response.statusText);
+                    }
+                })
+                .catch(error => console.error('Ошибка:', error));
+        });
+
+        // Функция для редактирования пациента
+        function editPatient(patientId) {
+            console.log("Editing patient with ID:", patientId); // Отладочное сообщение
+
+            if (patientId === undefined) {
+                console.error("patientId is undefined");
+                return;
+            }
+
+            // Получаем данные пациента по ID
+            fetch(`/api/Patient/${patientId}`)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    return response.json();
+                })
+                .then(patient => {
+                    // Заполняем поля формы данными пациента
+                    document.getElementById('editPatientId').value = patient.patientId;
+                    document.getElementById('patientName').value = patient.name;
+                    document.getElementById('patientDisease').value = patient.disease;
+
+                    // Отображаем форму редактирования
+                    document.getElementById('editFormContainer').style.display = 'block'; // Показываем контейнер
+                    document.getElementById('editPatientForm').style.display = 'block';
+                })
+                .catch(error => console.error('Ошибка:', error));
+        }
+
+        // Обработчик события для редактирования формы
+        document.getElementById('editPatientForm').addEventListener('submit', function (event) {
+            event.preventDefault(); // Предотвращаем стандартное поведение формы
+            updatePatient(); // Вызываем функцию обновления пациента
+        });
+
+        // Функция для сохранения изменений пациента
+        function updatePatient() {
+            const patientId = document.getElementById('editPatientId').value; // Получаем ID пациента
+            const updatedPatient = {
+                name: document.getElementById('patientName').value,
+                disease: document.getElementById('patientDisease').value
+            };
+
+            fetch(`/api/Patient/${patientId}`, {
+                method: 'PATCH', // Используем PATCH для обновления
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(updatedPatient)
+            })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    console.log('Patient updated:', data);
+                    loadPatients(); // Перезагрузите список пациентов
+                    document.getElementById('editFormContainer').style.display = 'none'; // Скрыть форму
+                })
+                .catch(error => console.error('Ошибка:', error));
+        }
+
+        // Функция для удаления пациента
+        function deletePatient(id) {
+            if (confirm('Вы уверены, что хотите удалить этого клиента?')) {
+                fetch(`/api/Patient/${id}`, {
+                    method: 'DELETE'
+                })
+                    .then(response => {
+                        if (response.ok) {
+                            loadPatients(); // Обновляем список пациентов
+                        } else {
+                            console.error('Ошибка при удалении клиента:', response.statusText);
+                        }
+                    })
+                    .catch(error => console.error('Ошибка:', error));
+            }
+        }
+
+        // Функция для отмены редактирования
+        function cancelEdit() {
+            document.getElementById('editFormContainer').style.display = 'none'; // Скрыть контейнер редактирования
+        }
+
+        // Загрузка персонала
+        function loadStaffs() {
+            fetch('/api/Staff')
+                .then(response => response.json())
+                .then(data => {
+                    const StaffList = document.getElementById('StaffList').getElementsByTagName('tbody')[0];
+                    StaffList.innerHTML = ''; // Очистка существующих строк
+
+                    data.forEach(Staff => {
+                        const row = StaffList.insertRow();
+                        row.innerHTML = `
+                            <td>${Staff.staffId}</td>
+                            <td>${Staff.name}</td>
+                            <td>${Staff.position}</td>
+                            <td>
+                                <button class="btn btn-warning" onclick="editStaff(${Staff.StaffId})">Изменить</button>
+                                <button class="btn btn-danger" onclick="deleteStaff(${Staff.StaffId})">Удалить</button>
+                            </td>
+                        `;
+                    });
+                })
+                .catch(error => console.error('Ошибка:', error));
+        }
+
+        // Обработчик события для добавления персонала
+        document.getElementById('addStaffForm').addEventListener('submit', function (event) {
+            event.preventDefault();
+
+            const newOrder = {
+                Name: document.getElementById('Name').value,
+                Position: parseFloat(document.getElementById('Position').value),
+
+            };
+
+            fetch('/api/Staff', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(newOrder)
+            })
+                .then(response => {
+                    if (!response.ok) {
+                        return response.json().then(err => {
+                            console.error('Ошибка сервера:', err);
+                            if (err.errors) {
+                                for (const [key, value] of Object.entries(err.errors)) {
+                                    console.error(`Ошибка в поле ${key}: ${value.join(', ')}`);
+                                }
+                            }
+                            throw new Error(`Ошибка: ${err.title || 'Неизвестная ошибка'}`);
+                        });
+                    }
+                    return response.json();
+                })
+        });
+
+        // Функция для редактирования персонала
+        function editStaff(id) {
+            console.log(`Редактирование персонала с ID: ${id}`); // Для отладки
+            fetch(`/api/Staff/${id}`)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Ошибка при получении заказа');
+                    }
+                    return response.json();
+                })
+                .then(Staff => {
+                    console.log(Staff); // Логируем ответ API
+
+                    document.getElementById('editStaffId').value = Staff.StaffId;
+
+                    // Обработка других полей
+                    document.getElementById('editName').value = Staff.Name || '';
+                    document.getElementById('editPosition').value = Staff.Position || '';
+
+                    document.getElementById('editStaffFormContainer').style.display = 'block';
+                })
+                .catch(error => console.error('Ошибка:', error));
+        }
+
+        document.getElementById('editStaffForm').addEventListener('submit', function (event) {
+            event.preventDefault(); // Предотвращаем стандартное поведение формы
+
+            const id = document.getElementById('editStaffId').value;
+            const updatedStaff = {
+                Name: parseFloat(document.getElementById('editName').value),
+                Position: parseInt(document.getElementById('editPosition').value),
+
+
+            };
+
+
+
+            console.log('Отправляемые данные:', updatedStaff);
+
+            fetch(`/api/Staff/${id}`, {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(updatedStaff)
+            })
+                .then(response => {
+                    if (!response.ok) {
+                        return response.json().then(err => {
+                            console.error('Ошибка сервера:', err); // Логируем ошибку сервера
+                            throw new Error(`Ошибка: ${err.title || 'Неизвестная ошибка'}`);
+                        });
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    console.log('Персонал обновлен:', data);
+                    loadStaff(); // Обновляем список заказов
+                    document.getElementById('editStaffFormContainer').style.display = 'none'; // Скрываем форму редактирования
+                })
+                .catch(error => console.error('Ошибка при обновлении заказа:', error));
+        });
+
+
+        // Функция для удаления персонала
+        function deleteStaff(id) {
+            if (confirm('Вы уверены, что хотите удалить этот заказ?')) {
+                fetch(`/api/Staff/${id}`, {
+                    method: 'DELETE'
+                })
+                    .then(response => {
+                        if (response.ok) {
+                            loadStaff(); // Обновляем список заказов
+                        } else {
+                            console.error('Ошибка при удалении заказа:', response.statusText);
+                        }
+                    })
+                    .catch(error => console.error('Ошибка:', error));
+            }
+        }
+
+        // Функция для отмены редактирования персонала
+        function cancelEditStaff() {
+            document.getElementById('editStaffFormContainer').style.display = 'none';
+        }
+
+
+
+
+        // Загрузка лекарств
+        function loadMedicines() {
+            fetch('/api/Medicine')
+                .then(response => response.json())
+                .then(data => {
+                    const MedicineList = document.getElementById('MedicineList').getElementsByTagName('tbody')[0];
+                    MedicineList.innerHTML = ''; // Очистка существующих строк
+
+                    data.forEach(Medicine => {
+                        const row = MedicineList.insertRow();
+                        row.innerHTML = `
+                                                <td>${Medicine.medicineId}</td>
+                                                <td>${Medicine.name}</td>
+                                                <td>${Medicine.usageMethod}</td>
+                                                <td>${Medicine.dosage}</td>
+                                            `;
+                    });
+                })
+                .catch(error => console.error('Ошибка:', error));
+        }
+
+        // Загрузка данных при загрузке страницы
+        window.onload = function () {
+            loadPatients();
+            loadStaffs();
+            loadMedicines();
+        };
+    </script>
+</body>
+    </html>

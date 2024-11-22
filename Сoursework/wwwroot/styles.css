@@ -1,0 +1,70 @@
+﻿/* Сброс стилей по умолчанию */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+/* Основной контейнер */
+body {
+    font-family: Arial, sans-serif;
+    background-color: #f4f4f4; /* Цвет фона страницы */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh; /* Высота на весь экран */
+}
+
+/* Контейнер формы */
+.container {
+    background-color: #fff; /* Цвет фона формы */
+    padding: 20px; /* Отступы внутри формы */
+    border-radius: 8px; /* Закругленные углы */
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1); /* Тень */
+    width: 300px; /* Ширина формы */
+}
+
+/* Заголовок формы */
+h2 {
+    margin-bottom: 20px; /* Отступ снизу */
+    text-align: center; /* Выравнивание по центру */
+}
+
+/* Стили для меток */
+label {
+    display: block; /* Отображение в блочном формате */
+    margin-bottom: 5px; /* Отступ снизу */
+}
+
+/* Стили для полей ввода */
+input[type="email"],
+input[type="password"] {
+    width: 100%; /* Ширина 100% */
+    padding: 10px; /* Отступы внутри полей */
+    margin-bottom: 15px; /* Отступ снизу */
+    border: 1px solid #ccc; /* Цвет границы */
+    border-radius: 4px; /* Закругленные углы */
+}
+
+/* Стили для кнопки */
+button {
+    width: 100%; /* Ширина 100% */
+    padding: 10px; /* Отступы внутри кнопки */
+    background-color: #007bff; /* Цвет фона кнопки */
+    color: white; /* Цвет текста кнопки */
+    border: none; /* Убираем границу */
+    border-radius: 4px; /* Закругленные углы */
+    cursor: pointer; /* Указатель при наведении */
+    font-size: 16px; /* Размер шрифта */
+}
+
+    /* Изменение цвета кнопки при наведении */
+    button:hover {
+        background-color: #0056b3; /* Темнее при наведении */
+    }
+
+/* Сообщение об ошибке */
+#errorMessage {
+    margin-top: 10px; /* Отступ сверху */
+    text-align: center; /* Выравнивание по центру */
+}
